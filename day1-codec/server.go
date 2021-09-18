@@ -2,6 +2,7 @@ package day1codec
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -111,4 +112,19 @@ func (s *Server) readRequest(cc codec.Codec) (*request, error) {
 		log.Println("rpc server: read argv error: ", err)
 	}
 	return req, nil
+}
+
+func (s *Server) sendResponse(cc codec.Codec, h *codec.Header, body interface{}, sending *sync.Mutex) {
+	sending.Lock()
+	defer sending.Unlock()
+	if err := cc.Write(h, body); err != nil {
+		log.Println("rpc server: write response error: ", err)
+	}
+}
+
+func (s *Server) handleRequest(cc codec.Codec, req *request, sending *sync.Mutex, wg *sync.WaitGroup) {
+	defer wg.Done()
+	log.Println(req.h, req.argv.Elem())
+	req.replyv = reflect.ValueOf(fmt.Sprintf("weerpc resp %d", req.h.Seq))
+	s.sendResponse(cc, req.h, req.replyv.Interface(), sending)
 }
