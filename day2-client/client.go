@@ -2,6 +2,7 @@ package day2client
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"wee_rpc/day1-codec/codec"
@@ -82,4 +83,30 @@ func (client *Client) terminateCalls(err error) {
 		call.Error = err
 		call.done()
 	}
+}
+
+func (client *Client) receive() {
+	var err error
+	for err == nil {
+		var h codec.Header
+		if err = client.cc.ReadHeader(&h); err != nil {
+			break
+		}
+		call := client.removeCall(client.seq)
+		switch {
+		case call == nil:
+			err = client.cc.ReadBody(nil)
+		case h.Error != "":
+			call.Error = fmt.Errorf(h.Error)
+			err = client.cc.ReadBody(nil)
+			call.done()
+		default:
+			err = client.cc.ReadBody(call.Reply)
+			if err != nil {
+				call.Error = errors.New("Reading body " + err.Error())
+			}
+			call.done()
+		}
+	}
+	client.terminateCalls(err)
 }
