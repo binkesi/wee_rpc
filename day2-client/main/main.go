@@ -1,13 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
+	"sync"
 	"time"
-	day1codec "wee_rpc/day1-codec"
-	"wee_rpc/day1-codec/codec"
+	day2client "wee_rpc/day2-client"
 )
 
 func startServer(addr chan string) {
@@ -18,7 +17,7 @@ func startServer(addr chan string) {
 	}
 	log.Println("start rpc server on", l.Addr())
 	addr <- l.Addr().String()
-	day1codec.Accept(l)
+	day2client.Accept(l)
 }
 
 func main() {
@@ -26,24 +25,24 @@ func main() {
 	addr := make(chan string)
 	go startServer(addr)
 
-	// in fact, following code is like a simple geerpc client
-	conn, _ := net.Dial("tcp", <-addr)
-	defer func() { _ = conn.Close() }()
+	// in fact, following code is like a simple weerpc client
+	client, _ := day2client.Dial("tcp", <-addr)
+	defer func() { _ = client.Close() }()
 
 	time.Sleep(time.Second)
-	// send options
-	_ = json.NewEncoder(conn).Encode(day1codec.DefaultOption)
-	cc := codec.NewGobCodec(conn)
-	// send request & receive response
+	// send requests & receive response
+	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
-		h := &codec.Header{
-			ServiceMethod: "Foo.Sum",
-			Seq:           uint64(i),
-		}
-		_ = cc.Write(h, fmt.Sprintf("weerpc req %d", h.Seq))
-		_ = cc.ReadHeader(h)
-		var reply string
-		_ = cc.ReadBody(&reply)
-		log.Println("reply:", reply)
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			args := fmt.Sprintf("weerpc req %d", i)
+			var reply string
+			if err := client.Call("Foo.Sum", args, &reply); err != nil {
+				log.Fatal("call Foo.Sum error:", err)
+			}
+			log.Println("reply:", reply)
+		}(i)
 	}
+	wg.Wait()
 }

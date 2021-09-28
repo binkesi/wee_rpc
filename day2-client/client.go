@@ -8,7 +8,7 @@ import (
 	"log"
 	"net"
 	"sync"
-	"wee_rpc/day1-codec/codec"
+	"wee_rpc/day2-client/codec"
 )
 
 type Call struct {

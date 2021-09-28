@@ -8,7 +8,7 @@ import (
 	"net"
 	"reflect"
 	"sync"
-	"wee_rpc/day1-codec/codec"
+	"wee_rpc/day2-client/codec"
 )
 
 const MagicNumber = 0x3bef5c
