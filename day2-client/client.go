@@ -95,7 +95,7 @@ func (client *Client) receive() {
 		if err = client.cc.ReadHeader(&h); err != nil {
 			break
 		}
-		call := client.removeCall(client.seq)
+		call := client.removeCall(h.Seq)
 		switch {
 		case call == nil:
 			err = client.cc.ReadBody(nil)
