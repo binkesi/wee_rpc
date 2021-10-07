@@ -9,14 +9,17 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 	"wee_rpc/day4-timeout/codec"
 )
 
 const MagicNumber = 0x3bef5c
 
 type Option struct {
-	MagicNumber int
-	CodecType   codec.Type
+	MagicNumber       int
+	CodecType         codec.Type
+	ConnectionTimeout time.Duration
+	HandleTimeout     time.Duration
 }
 
 type request struct {
@@ -27,8 +30,9 @@ type request struct {
 }
 
 var DefaultOption = &Option{
-	MagicNumber: MagicNumber,
-	CodecType:   codec.GobType,
+	MagicNumber:       MagicNumber,
+	CodecType:         codec.GobType,
+	ConnectionTimeout: time.Second * 10,
 }
 
 type Server struct {
