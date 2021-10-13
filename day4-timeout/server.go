@@ -62,6 +62,8 @@ func Accept(lis net.Listener) { DefaultServer.Accept(lis) }
 func (s *Server) ServeConn(conn io.ReadWriteCloser) {
 	defer func() { _ = conn.Close() }()
 	var opt Option
+	dec := json.NewDecoder(conn)
+	log.Println("get new decoder:", dec)
 	if err := json.NewDecoder(conn).Decode(&opt); err != nil {
 		log.Println("rpc server, decode option error: ", err)
 		return

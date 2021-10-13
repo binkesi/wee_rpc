@@ -24,10 +24,10 @@ const (
 )
 
 type Option struct {
-	MagicNumber       int
-	CodecType         codec.Type
-	ConnectionTimeout time.Duration
-	HandleTimeout     time.Duration
+	MagicNumber    int
+	CodecType      codec.Type
+	ConnectTimeout time.Duration
+	HandleTimeout  time.Duration
 }
 
 type request struct {
@@ -38,9 +38,9 @@ type request struct {
 }
 
 var DefaultOption = &Option{
-	MagicNumber:       MagicNumber,
-	CodecType:         codec.GobType,
-	ConnectionTimeout: time.Second * 10,
+	MagicNumber:    MagicNumber,
+	CodecType:      codec.GobType,
+	ConnectTimeout: time.Second * 10,
 }
 
 type Server struct {
@@ -66,9 +66,14 @@ func (s *Server) Accept(lis net.Listener) {
 
 func Accept(lis net.Listener) { DefaultServer.Accept(lis) }
 
-func (s *Server) ServeConn(conn io.ReadWriteCloser) {
+func (server *Server) ServeConn(conn io.ReadWriteCloser) {
 	defer func() { _ = conn.Close() }()
 	var opt Option
+	log.Println("rpc conn: ", conn, opt.MagicNumber)
+	dec := json.NewDecoder(conn)
+	log.Println("get new decoder:", dec)
+	err := dec.Decode(&opt)
+	log.Println("decode result:", err)
 	if err := json.NewDecoder(conn).Decode(&opt); err != nil {
 		log.Println("rpc server, decode option error: ", err)
 		return
@@ -82,7 +87,7 @@ func (s *Server) ServeConn(conn io.ReadWriteCloser) {
 		log.Printf("rpc server, invalid codec type %v", opt.CodecType)
 		return
 	}
-	s.ServeCodec(f(conn), &opt)
+	server.ServeCodec(f(conn), &opt)
 }
 
 var invalidRequest = struct{}{}

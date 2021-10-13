@@ -20,16 +20,9 @@ func (f Foo) Sum(args Args, reply *int) error {
 }
 
 func startServer(addr chan string) {
-	// pick a free port
 	var foo Foo
-	if err := day5httpdebug.Register(&foo); err != nil {
-		log.Fatal("register error:", err)
-	}
-	l, err := net.Listen("tcp", ":9999")
-	if err != nil {
-		log.Fatal("network error:", err)
-	}
-	log.Println("start rpc server on", l.Addr())
+	l, _ := net.Listen("tcp", ":9999")
+	_ = day5httpdebug.Register(&foo)
 	day5httpdebug.HandleHTTP()
 	addr <- l.Addr().String()
 	_ = http.Serve(l, nil)

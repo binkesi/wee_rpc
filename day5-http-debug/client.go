@@ -242,7 +242,7 @@ func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (cli
 	if err != nil {
 		return nil, err
 	}
-	conn, err := net.DialTimeout(network, address, opt.ConnectionTimeout)
+	conn, err := net.DialTimeout(network, address, opt.ConnectTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -256,13 +256,13 @@ func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (cli
 		client, err := f(conn, opt)
 		ch <- clientResult{client: client, err: err}
 	}()
-	if opt.ConnectionTimeout == 0 {
+	if opt.ConnectTimeout == 0 {
 		result := <-ch
 		return result.client, result.err
 	}
 	select {
-	case <-time.After(opt.ConnectionTimeout):
-		return nil, fmt.Errorf("rpc client: connect timeout: expect within %s", opt.ConnectionTimeout)
+	case <-time.After(opt.ConnectTimeout):
+		return nil, fmt.Errorf("rpc client: connect timeout: expect within %s", opt.ConnectTimeout)
 	case result := <-ch:
 		return result.client, result.err
 	}
